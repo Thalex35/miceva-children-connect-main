@@ -1,6 +1,8 @@
 {
   "name": "tanstack_start_ts",
   "version": "1.0.0",
+  "description": "MICEVA Children's Department management application",
+  "author": "MICEVA Children's Department",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -55,6 +57,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "electron-updater": "^6.8.9",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
@@ -103,6 +106,12 @@
     ],
     "win": {
       "target": "nsis"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Thalex35",
+      "repo": "miceva-children-connect-main",
+      "releaseType": "release"
     },
     "nsis": {
       "oneClick": false,
