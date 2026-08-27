@@ -17,6 +17,14 @@ function isTrustedUrl(value) {
   }
 }
 
+function isContactUrl(value) {
+  try {
+    return ["tel:", "mailto:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
 function createWindow() {
   const window = new BrowserWindow({
     width: 1280,
@@ -38,6 +46,11 @@ function createWindow() {
   });
 
   window.webContents.on("will-navigate", (event, url) => {
+    if (isContactUrl(url)) {
+      event.preventDefault();
+      void shell.openExternal(url);
+      return;
+    }
     if (!isTrustedUrl(url)) event.preventDefault();
   });
 

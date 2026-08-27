@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatch, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, MessageCircle, Pencil, Phone, Trash2 } from "lucide-react";
@@ -37,7 +37,10 @@ export const Route = createFileRoute("/_authenticated/children/$childId")({
   head: () => ({
     meta: [
       { title: "Child profile — MICEVA Children's Department" },
-      { name: "description", content: "Full child profile with guardian contacts and department notes." },
+      {
+        name: "description",
+        content: "Full child profile with guardian contacts and department notes.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Child profile — MICEVA Children's Department" },
       { property: "og:description", content: "Private child profile." },
@@ -85,6 +88,10 @@ function GuardianCard({ guardian }: { guardian: Guardian }) {
 
 function ChildDetail() {
   const { childId } = Route.useParams();
+  const editMatch = useMatch({
+    from: "/_authenticated/children/$childId/edit",
+    shouldThrow: false,
+  });
   const { data: child, isLoading } = useChild(childId);
   const { isAdmin, user, profile } = useAuth();
   const navigate = useNavigate();
@@ -110,6 +117,8 @@ function ChildDetail() {
     );
   }
 
+  if (editMatch) return <Outlet />;
+
   const info = completeness(child);
   const { age, approximate } = childAge(child);
 
@@ -134,7 +143,10 @@ function ChildDetail() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Link to="/children" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+      <Link
+        to="/children"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"
+      >
         <ArrowLeft className="size-4" /> Children
       </Link>
 
@@ -163,7 +175,8 @@ function ChildDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this profile?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {fullName(child)} will be removed from the register permanently. This cannot be undone.
+                    {fullName(child)} will be removed from the register permanently. This cannot be
+                    undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -194,11 +207,20 @@ function ChildDetail() {
           <CardTitle className="text-base">Personal information</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <Row label="Date of birth" value={child.date_of_birth ? formatDate(child.date_of_birth) : null} />
-          <Row label="Approximate age" value={child.approximate_age ? `${child.approximate_age} years` : null} />
+          <Row
+            label="Date of birth"
+            value={child.date_of_birth ? formatDate(child.date_of_birth) : null}
+          />
+          <Row
+            label="Approximate age"
+            value={child.approximate_age ? `${child.approximate_age} years` : null}
+          />
           <Row label="Address" value={child.address} />
           <Row label="Class / group" value={child.class_group} />
-          <Row label="Registration date" value={child.registration_date ? formatDate(child.registration_date) : null} />
+          <Row
+            label="Registration date"
+            value={child.registration_date ? formatDate(child.registration_date) : null}
+          />
           <Row label="Status" value={child.status === "active" ? "Active" : "Inactive"} />
         </CardContent>
       </Card>
@@ -225,6 +247,8 @@ function ChildDetail() {
           <CardContent className="pt-0 text-sm whitespace-pre-wrap">{child.notes}</CardContent>
         </Card>
       )}
+
+      <Outlet />
     </div>
   );
 }
