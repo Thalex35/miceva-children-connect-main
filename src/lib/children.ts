@@ -37,8 +37,19 @@ export function fullName(child: Pick<Child, "first_name" | "last_name">) {
 
 export function ageFromDob(dob: string | null): number | null {
   if (!dob) return null;
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+  if (!parts) return null;
+  const year = Number(parts[1]);
+  const month = Number(parts[2]);
+  const day = Number(parts[3]);
   const birth = new Date(dob + "T00:00:00");
-  if (Number.isNaN(birth.getTime())) return null;
+  if (
+    Number.isNaN(birth.getTime()) ||
+    birth.getFullYear() !== year ||
+    birth.getMonth() !== month - 1 ||
+    birth.getDate() !== day
+  )
+    return null;
   const now = new Date();
   let age = now.getFullYear() - birth.getFullYear();
   const m = now.getMonth() - birth.getMonth();
@@ -54,6 +65,10 @@ export function childAge(child: Pick<Child, "date_of_birth" | "approximate_age">
     return { age: child.approximate_age, approximate: true };
   }
   return { age: null, approximate: false };
+}
+
+export function isEligibleForYoungTransition(child: Pick<Child, "date_of_birth" | "class_group">) {
+  return child.class_group === "Children" && (ageFromDob(child.date_of_birth) ?? -1) >= 14;
 }
 
 export function primaryGuardian(guardians: Guardian[] | undefined) {
@@ -81,7 +96,9 @@ export function completeness(child: ChildWithGuardians) {
     "Class/group": Boolean(child.class_group),
   };
   const missing = COMPLETENESS_FIELDS.filter((f) => !present[f]);
-  const percent = Math.round(((COMPLETENESS_FIELDS.length - missing.length) / COMPLETENESS_FIELDS.length) * 100);
+  const percent = Math.round(
+    ((COMPLETENESS_FIELDS.length - missing.length) / COMPLETENESS_FIELDS.length) * 100,
+  );
   return { percent, missing, complete: missing.length === 0 };
 }
 
