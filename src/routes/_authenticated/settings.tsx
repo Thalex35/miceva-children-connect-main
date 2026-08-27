@@ -72,10 +72,10 @@ function SettingsPage() {
           <p>
             Name: <span className="font-medium">{profile?.display_name ?? "—"}</span>
           </p>
-          <p className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             Access level:{" "}
             <Badge variant="secondary">{role === "admin" ? "Administrator" : "Committee member"}</Badge>
-          </p>
+          </div>
         </CardContent>
       </Card>
 
