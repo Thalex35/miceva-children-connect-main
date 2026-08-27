@@ -7,11 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+declare const __APP_VERSION__: string;
+
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports — MICEVA Children's Department" },
-      { name: "description", content: "Statistics and exportable reports for the children's register." },
+      {
+        name: "description",
+        content: "Statistics and exportable reports for the children's register.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Reports — MICEVA Children's Department" },
       { property: "og:description", content: "Department statistics and exports." },
@@ -43,7 +48,10 @@ function ReportsPage() {
     const list = children.data ?? [];
     const girls = list.filter((c) => c.gender === "F").length;
     const boys = list.filter((c) => c.gender === "M").length;
-    const buckets = { "0-5": 0, "6-9": 0, "10-12": 0, "13+": 0, Unknown: 0 } as Record<string, number>;
+    const buckets = { "0-5": 0, "6-9": 0, "10-12": 0, "13+": 0, Unknown: 0 } as Record<
+      string,
+      number
+    >;
     for (const c of list) {
       const { age } = childAge(c);
       if (age === null) buckets["Unknown"]!++;
@@ -95,17 +103,30 @@ function ReportsPage() {
         .map(csvCell)
         .join(",");
     });
-    download(`miceva-children-${new Date().toISOString().slice(0, 10)}.csv`, [header.map(csvCell).join(","), ...rows].join("\n"));
+    download(
+      `miceva-children-${new Date().toISOString().slice(0, 10)}.csv`,
+      [header.map(csvCell).join(","), ...rows].join("\n"),
+    );
   };
 
   const exportMembers = () => {
     const header = ["Name", "Role", "Phone", "Email", "Responsibilities", "Active"];
     const rows = (members.data ?? []).map((m) =>
-      [m.name, m.role ?? "", m.phone ?? "", m.email ?? "", m.responsibilities ?? "", m.active ? "Yes" : "No"]
+      [
+        m.name,
+        m.role ?? "",
+        m.phone ?? "",
+        m.email ?? "",
+        m.responsibilities ?? "",
+        m.active ? "Yes" : "No",
+      ]
         .map(csvCell)
         .join(","),
     );
-    download(`miceva-administration-${new Date().toISOString().slice(0, 10)}.csv`, [header.map(csvCell).join(","), ...rows].join("\n"));
+    download(
+      `miceva-administration-${new Date().toISOString().slice(0, 10)}.csv`,
+      [header.map(csvCell).join(","), ...rows].join("\n"),
+    );
   };
 
   if (children.isLoading) return <Skeleton className="h-96 w-full" />;
@@ -136,11 +157,23 @@ function ReportsPage() {
             <CardTitle className="text-base">Overview</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5 pt-0 text-sm">
-            <p>Total children: <span className="font-medium">{stats.total}</span></p>
-            <p>Girls: <span className="font-medium">{stats.girls}</span> · Boys: <span className="font-medium">{stats.boys}</span></p>
-            <p>Complete profiles: <span className="font-medium">{stats.complete}</span> / {stats.total}</p>
-            <p>With a guardian phone: <span className="font-medium">{stats.withPhone}</span></p>
-            <p>Committee members: <span className="font-medium">{members.data?.length ?? 0}</span></p>
+            <p>
+              Total children: <span className="font-medium">{stats.total}</span>
+            </p>
+            <p>
+              Girls: <span className="font-medium">{stats.girls}</span> · Boys:{" "}
+              <span className="font-medium">{stats.boys}</span>
+            </p>
+            <p>
+              Complete profiles: <span className="font-medium">{stats.complete}</span> /{" "}
+              {stats.total}
+            </p>
+            <p>
+              With a guardian phone: <span className="font-medium">{stats.withPhone}</span>
+            </p>
+            <p>
+              Committee members: <span className="font-medium">{members.data?.length ?? 0}</span>
+            </p>
           </CardContent>
         </Card>
 
@@ -170,7 +203,10 @@ function ReportsPage() {
           </CardHeader>
           <CardContent className="grid gap-2 pt-0 sm:grid-cols-2">
             {[...stats.groups.entries()].map(([label, count]) => (
-              <div key={label} className="flex justify-between border-b border-border py-1.5 text-sm">
+              <div
+                key={label}
+                className="flex justify-between border-b border-border py-1.5 text-sm"
+              >
                 <span className="text-muted-foreground">{label}</span>
                 <span className="font-medium">{count}</span>
               </div>
@@ -210,6 +246,9 @@ function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+      <p className="text-center text-xs text-muted-foreground">
+        Children Management v{__APP_VERSION__}
+      </p>
     </div>
   );
 }

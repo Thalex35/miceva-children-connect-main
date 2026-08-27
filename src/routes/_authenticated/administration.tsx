@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Mail, Phone, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { adminKey, useAdminMembers, type AdminMember } from "@/lib/queries";
-import { NOT_PROVIDED, telHref } from "@/lib/children";
+import { NOT_PROVIDED } from "@/lib/children";
 import { useAuth } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,11 @@ const schema = z.object({
     .trim()
     .max(30)
     .refine((v) => v === "" || /^[0-9+][0-9 ()+\-.]{5,}$/.test(v), "Enter a valid phone number"),
-  email: z.string().trim().max(255).refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid email"),
+  email: z
+    .string()
+    .trim()
+    .max(255)
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid email"),
   responsibilities: z.string().trim().max(1000),
 });
 
@@ -54,13 +58,7 @@ type Values = z.infer<typeof schema>;
 
 const empty: Values = { name: "", role: "", phone: "", email: "", responsibilities: "" };
 
-function MemberDialog({
-  member,
-  trigger,
-}: {
-  member?: AdminMember;
-  trigger: React.ReactNode;
-}) {
+function MemberDialog({ member, trigger }: { member?: AdminMember; trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Values>(
     member
@@ -220,23 +218,11 @@ function AdministrationPage() {
                 </div>
                 {!m.active && <Badge variant="outline">Inactive</Badge>}
               </div>
-              <p className="text-sm text-muted-foreground">{m.responsibilities ?? "No responsibilities recorded."}</p>
+              <p className="min-w-0 wrap-anywhere text-sm text-muted-foreground">
+                {m.responsibilities ?? "No responsibilities recorded."}
+              </p>
               <p className="text-sm">{m.phone ?? NOT_PROVIDED}</p>
               <div className="flex flex-wrap gap-2 pt-1">
-                {m.phone && (
-                  <Button asChild size="sm" variant="secondary">
-                    <a href={telHref(m.phone)}>
-                      <Phone className="size-4" /> Call
-                    </a>
-                  </Button>
-                )}
-                {m.email && (
-                  <Button asChild size="sm" variant="outline">
-                    <a href={`mailto:${m.email}`}>
-                      <Mail className="size-4" /> Email
-                    </a>
-                  </Button>
-                )}
                 <MemberDialog
                   member={m}
                   trigger={
@@ -246,7 +232,12 @@ function AdministrationPage() {
                   }
                 />
                 {isAdmin && (
-                  <Button size="sm" variant="ghost" onClick={() => remove(m)} aria-label={`Remove ${m.name}`}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void remove(m)}
+                    aria-label={`Remove ${m.name}`}
+                  >
                     <Trash2 className="size-4" />
                   </Button>
                 )}

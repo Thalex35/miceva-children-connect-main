@@ -17,14 +17,6 @@ function isTrustedUrl(value) {
   }
 }
 
-function isContactUrl(value) {
-  try {
-    return ["tel:", "mailto:"].includes(new URL(value).protocol);
-  } catch {
-    return false;
-  }
-}
-
 function createWindow() {
   const window = new BrowserWindow({
     width: 1280,
@@ -133,7 +125,6 @@ ipcMain.handle("desktop-updater:download", async () => {
 ipcMain.handle("desktop-updater:install", () => {
   if (app.isPackaged && updateState.status === "downloaded") autoUpdater.quitAndInstall();
 });
-
 app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     callback(permission === "notifications");
