@@ -3,8 +3,9 @@ import { Phone, Plus, Search, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { childrenKey, useChildren } from "@/lib/queries";
+import { transitionChildToYoung } from "@/lib/transitions";
 import {
   childAge,
   completeness,
@@ -16,6 +17,7 @@ import {
   normalize,
   primaryGuardian,
   telHref,
+  type ChildWithGuardians,
 } from "@/lib/children";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -69,6 +71,7 @@ function ChildrenPage() {
   const { data, isLoading, isError } = useChildren();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const search = Route.useSearch();
   const [term, setTerm] = useState("");
   const [gender, setGender] = useState("all");
@@ -85,32 +88,25 @@ function ChildrenPage() {
     [data],
   );
 
-  const moveToYoung = async (childId: string, childName: string) => {
-    // Guard against re-transitioning a child that was already moved to Young
-    // by someone else since this list was loaded. class_group can be NULL, so
-    // a plain .neq("class_group", "Young") would (per SQL NULL semantics)
-    // wrongly exclude children whose class_group is blank — the .or() below
-    // treats "blank" and "not Young" as both acceptable starting states.
-    const { data: updated, error } = await supabase
-      .from("children")
-      .update({ class_group: "Young" })
-      .eq("id", childId)
-      .or("class_group.is.null,class_group.neq.Young")
-      .select("id")
-      .maybeSingle();
+  const moveToYoung = async (child: ChildWithGuardians) => {
+    const result = await transitionChildToYoung(
+      child,
+      { userId: user?.id, username: profile?.username },
+      "manual",
+    );
 
-    if (error) {
+    if (result.status === "error") {
       toast.error("The child could not be moved to Young. Please try again.");
       return;
     }
-    if (!updated) {
+    if (result.status === "already-young") {
       toast.error("This child is already in the Young group. Refresh and try again.");
       await queryClient.invalidateQueries({ queryKey: childrenKey });
       return;
     }
 
     await queryClient.invalidateQueries({ queryKey: childrenKey });
-    toast.success(`${childName} was moved to Young.`);
+    toast.success(`${fullName(child)} was moved to Young.`);
   };
 
   const groups = useMemo(
@@ -196,7 +192,8 @@ function ChildrenPage() {
         <CardHeader>
           <CardTitle className="text-base">Children Ready for Transition</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Children who are 14 or older and not yet in the Young group can be moved there.
+            Children 14 or older are moved to Young automatically. Anything still waiting here can
+            be moved manually.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
@@ -240,9 +237,7 @@ function ChildrenPage() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => void moveToYoung(child.id, fullName(child))}
-                        >
+                        <AlertDialogAction onClick={() => void moveToYoung(child)}>
                           Move to Young
                         </AlertDialogAction>
                       </AlertDialogFooter>
