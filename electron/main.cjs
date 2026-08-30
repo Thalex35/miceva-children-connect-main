@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell, session } = require("electron");
 const { autoUpdater } = require("electron-updater");
 
-const APP_URL = "https://miceva-children-connect-main.vercel.app";
+const APP_URL = "https://children-miceva.vercel.app";
 const APP_ORIGIN = new URL(APP_URL).origin;
 let updateState = {
   status: "idle",
