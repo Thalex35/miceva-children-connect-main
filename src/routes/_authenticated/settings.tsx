@@ -74,7 +74,9 @@ function SettingsPage() {
           </p>
           <div className="flex items-center gap-2">
             Access level:{" "}
-            <Badge variant="secondary">{role === "admin" ? "Administrator" : "Committee member"}</Badge>
+            <Badge variant="secondary">
+              {role === "admin" ? "Administrator" : "Committee member"}
+            </Badge>
           </div>
         </CardContent>
       </Card>

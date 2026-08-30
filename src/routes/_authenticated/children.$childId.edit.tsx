@@ -22,7 +22,8 @@ function EditChild() {
   const { data: child, isLoading } = useChild(childId);
 
   if (isLoading) return <Skeleton className="mx-auto h-96 max-w-3xl w-full" />;
-  if (!child) return <p className="text-center text-sm text-muted-foreground">Profile not found.</p>;
+  if (!child)
+    return <p className="text-center text-sm text-muted-foreground">Profile not found.</p>;
 
   return (
     <div className="space-y-4">

@@ -30,7 +30,10 @@ const AuthContext = createContext<AuthState>({
 
 /** Usernames are internal; auth uses a deterministic private address. */
 export function usernameToEmail(username: string) {
-  return `${username.trim().toLowerCase().replace(/[^a-z0-9]/g, "")}@miceva.local`;
+  return `${username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")}@miceva.local`;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

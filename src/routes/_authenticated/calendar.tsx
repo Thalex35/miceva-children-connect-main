@@ -12,7 +12,10 @@ export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
       { title: "Calendar — MICEVA Children's Department" },
-      { name: "description", content: "Monthly calendar of prayer meetings, programs and department activities." },
+      {
+        name: "description",
+        content: "Monthly calendar of prayer meetings, programs and department activities.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Calendar — MICEVA Children's Department" },
       { property: "og:description", content: "Department activity calendar." },
@@ -41,7 +44,8 @@ function CalendarPage() {
     }
     const cells: (Date | null)[] = [];
     for (let i = 0; i < first.getDay(); i++) cells.push(null);
-    for (let d = 1; d <= last.getDate(); d++) cells.push(new Date(cursor.getFullYear(), cursor.getMonth(), d));
+    for (let d = 1; d <= last.getDate(); d++)
+      cells.push(new Date(cursor.getFullYear(), cursor.getMonth(), d));
     return { grid: cells, byDay: map };
   }, [data, cursor]);
 
@@ -55,7 +59,12 @@ function CalendarPage() {
       <div className="flex items-center justify-between gap-3">
         <h1 className="page-title">Calendar</h1>
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" onClick={() => move(-1)} aria-label="Previous month">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => move(-1)}
+            aria-label="Previous month"
+          >
             <ChevronLeft className="size-4" />
           </Button>
           <span className="min-w-40 text-center text-sm font-medium">

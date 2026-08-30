@@ -67,8 +67,25 @@ export function childAge(child: Pick<Child, "date_of_birth" | "approximate_age">
   return { age: null, approximate: false };
 }
 
-export function isEligibleForYoungTransition(child: Pick<Child, "date_of_birth" | "class_group">) {
-  return child.class_group === "Children" && (ageFromDob(child.date_of_birth) ?? -1) >= 14;
+/**
+ * A child is eligible for the 14+ transition (Children -> Young) when they are
+ * currently recorded in the "Children" group and their age is 14 or older.
+ *
+ * Two things make this fragile if implemented naively, so both are handled here:
+ * - "Class / group" is a free-text field (no fixed list of values), so staff may
+ *   type "children", "Children ", "CHILDREN", etc. The comparison is normalized
+ *   (trimmed, lower-cased, accents stripped) using the same `normalize` helper
+ *   used for search, so any of those variants still match.
+ * - Not every child has an exact date of birth; some only have `approximate_age`.
+ *   `childAge` already knows how to fall back to that, so eligibility is based on
+ *   the same age a staff member sees displayed for the child, not only on the
+ *   exact date-of-birth calculation.
+ */
+export function isEligibleForYoungTransition(
+  child: Pick<Child, "date_of_birth" | "approximate_age" | "class_group">,
+) {
+  if (normalize(child.class_group).trim() !== "children") return false;
+  return (childAge(child).age ?? -1) >= 14;
 }
 
 export function primaryGuardian(guardians: Guardian[] | undefined) {

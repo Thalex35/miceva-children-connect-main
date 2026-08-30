@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { childrenKey, useChildren } from "@/lib/queries";
 import {
-  ageFromDob,
   childAge,
   completeness,
   formatDate,
@@ -179,17 +178,21 @@ function ChildrenPage() {
         </Button>
       </div>
 
-      {transitionCandidates.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Children Ready for Transition</CardTitle>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Children Ready for Transition</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Children in the Children group who are 14 or older can be moved to Young.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-0">
+          {transitionCandidates.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Children in the Children group who are 14 or older can be moved to Young.
+              No child in the Children group is currently 14 or older.
             </p>
-          </CardHeader>
-          <CardContent className="space-y-2 pt-0">
-            {transitionCandidates.map((child) => {
-              const age = ageFromDob(child.date_of_birth);
+          ) : (
+            transitionCandidates.map((child) => {
+              const { age, approximate } = childAge(child);
               return (
                 <div
                   key={child.id}
@@ -204,7 +207,8 @@ function ChildrenPage() {
                       {fullName(child)}
                     </Link>
                     <p className="text-sm text-muted-foreground">
-                      DOB: {formatDate(child.date_of_birth)} · Age: {age} · Group: Children · ID:{" "}
+                      DOB: {formatDate(child.date_of_birth)} · Age: {age}
+                      {approximate ? " (approx.)" : ""} · Group: {child.class_group} · ID:{" "}
                       {child.id}
                     </p>
                   </div>
@@ -232,10 +236,10 @@ function ChildrenPage() {
                   </AlertDialog>
                 </div>
               );
-            })}
-          </CardContent>
-        </Card>
-      )}
+            })
+          )}
+        </CardContent>
+      </Card>
 
       <div className="relative">
         <Search
@@ -372,6 +376,9 @@ function ChildrenPage() {
                   <Badge variant={info.complete ? "secondary" : "outline"}>
                     {info.complete ? "Complete" : `${info.percent}% complete`}
                   </Badge>
+                  {isEligibleForYoungTransition(child) && (
+                    <Badge variant="default">14+ · Ready for transition</Badge>
+                  )}
                 </div>
               </Link>
               {g?.phone && (

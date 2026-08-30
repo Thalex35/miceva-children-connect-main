@@ -5,7 +5,10 @@ export const Route = createFileRoute("/_authenticated/children/new")({
   head: () => ({
     meta: [
       { title: "Add a child — MICEVA Children's Department" },
-      { name: "description", content: "Register a new child in the department's private register." },
+      {
+        name: "description",
+        content: "Register a new child in the department's private register.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Add a child — MICEVA Children's Department" },
       { property: "og:description", content: "Register a new child." },

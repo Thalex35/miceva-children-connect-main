@@ -43,7 +43,10 @@ export const Route = createFileRoute("/_authenticated/activities")({
   head: () => ({
     meta: [
       { title: "Activities — MICEVA Children's Department" },
-      { name: "description", content: "Manage recurring prayer meetings, programs and one-time department events." },
+      {
+        name: "description",
+        content: "Manage recurring prayer meetings, programs and one-time department events.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Activities — MICEVA Children's Department" },
       { property: "og:description", content: "Recurring activities and events." },
@@ -70,11 +73,14 @@ type Values = z.infer<typeof schema>;
 function toValues(event?: EventRow): Values {
   const start = event ? new Date(event.start_datetime) : null;
   const end = event?.end_datetime ? new Date(event.end_datetime) : null;
-  const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const hhmm = (d: Date) =>
+    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   return {
     title: event?.title ?? "",
     description: event?.description ?? "",
-    date: start ? `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}` : "",
+    date: start
+      ? `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`
+      : "",
     startTime: start ? hhmm(start) : "",
     endTime: end ? hhmm(end) : "",
     location: event?.location ?? "",
@@ -123,7 +129,12 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
       responsible_person: v.responsible_person || null,
       event_type: v.event_type,
       recurrence: v.recurrence,
-      recurrence_days: v.recurrence === "weekly" || v.recurrence === "custom_weekly" ? (days.length ? days : [start.getDay()]) : null,
+      recurrence_days:
+        v.recurrence === "weekly" || v.recurrence === "custom_weekly"
+          ? days.length
+            ? days
+            : [start.getDay()]
+          : null,
       recurrence_until: v.recurrence !== "none" && v.recurrence_until ? v.recurrence_until : null,
     };
     const { error } = event
@@ -159,30 +170,53 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="e-title">Title *</Label>
-            <Input id="e-title" value={values.title} onChange={(e) => set("title", e.target.value)} />
+            <Input
+              id="e-title"
+              value={values.title}
+              onChange={(e) => set("title", e.target.value)}
+            />
             {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="e-date">Date *</Label>
-              <Input id="e-date" type="date" value={values.date} onChange={(e) => set("date", e.target.value)} />
+              <Input
+                id="e-date"
+                type="date"
+                value={values.date}
+                onChange={(e) => set("date", e.target.value)}
+              />
               {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="e-start">Start *</Label>
-              <Input id="e-start" type="time" value={values.startTime} onChange={(e) => set("startTime", e.target.value)} />
+              <Input
+                id="e-start"
+                type="time"
+                value={values.startTime}
+                onChange={(e) => set("startTime", e.target.value)}
+              />
               {errors.startTime && <p className="text-xs text-destructive">{errors.startTime}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="e-end">End</Label>
-              <Input id="e-end" type="time" value={values.endTime} onChange={(e) => set("endTime", e.target.value)} />
+              <Input
+                id="e-end"
+                type="time"
+                value={values.endTime}
+                onChange={(e) => set("endTime", e.target.value)}
+              />
               {errors.endTime && <p className="text-xs text-destructive">{errors.endTime}</p>}
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="e-loc">Location</Label>
-              <Input id="e-loc" value={values.location} onChange={(e) => set("location", e.target.value)} />
+              <Input
+                id="e-loc"
+                value={values.location}
+                onChange={(e) => set("location", e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="e-resp">Responsible person</Label>
@@ -195,7 +229,9 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
             <div className="space-y-2">
               <Label htmlFor="e-type">Type</Label>
               <Select value={values.event_type} onValueChange={(v) => set("event_type", v)}>
-                <SelectTrigger id="e-type"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="e-type">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPES.map((t) => (
                     <SelectItem key={t} value={t}>
@@ -208,7 +244,9 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
             <div className="space-y-2">
               <Label htmlFor="e-rec">Repeats</Label>
               <Select value={values.recurrence} onValueChange={(v) => set("recurrence", v)}>
-                <SelectTrigger id="e-rec"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="e-rec">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">One time</SelectItem>
                   <SelectItem value="daily">Every day</SelectItem>
@@ -230,7 +268,9 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
                     size="sm"
                     variant={days.includes(index) ? "default" : "outline"}
                     onClick={() =>
-                      setDays((d) => (d.includes(index) ? d.filter((x) => x !== index) : [...d, index]))
+                      setDays((d) =>
+                        d.includes(index) ? d.filter((x) => x !== index) : [...d, index],
+                      )
                     }
                   >
                     {label.slice(0, 3)}
@@ -252,7 +292,12 @@ function EventDialog({ event, trigger }: { event?: EventRow; trigger: React.Reac
           )}
           <div className="space-y-2">
             <Label htmlFor="e-desc">Description</Label>
-            <Textarea id="e-desc" rows={3} value={values.description} onChange={(e) => set("description", e.target.value)} />
+            <Textarea
+              id="e-desc"
+              rows={3}
+              value={values.description}
+              onChange={(e) => set("description", e.target.value)}
+            />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={saving}>
@@ -331,7 +376,11 @@ function ActivitiesPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Switch checked={e.active} onCheckedChange={(v) => toggleActive(e, v)} aria-label="Active" />
+                <Switch
+                  checked={e.active}
+                  onCheckedChange={(v) => toggleActive(e, v)}
+                  aria-label="Active"
+                />
                 {e.active ? "Active" : "Paused"}
               </label>
               <EventDialog
@@ -343,7 +392,12 @@ function ActivitiesPage() {
                 }
               />
               {isAdmin && (
-                <Button size="sm" variant="ghost" onClick={() => remove(e)} aria-label={`Delete ${e.title}`}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => remove(e)}
+                  aria-label={`Delete ${e.title}`}
+                >
                   <Trash2 className="size-4" />
                 </Button>
               )}

@@ -66,7 +66,9 @@ function LoginPage() {
           <h1 className="text-2xl leading-tight font-semibold text-sidebar-foreground">
             MICEVA Children&rsquo;s Department
           </h1>
-          <p className="mt-1 text-sm text-sidebar-foreground/70">Private Management System — 2026</p>
+          <p className="mt-1 text-sm text-sidebar-foreground/70">
+            Private Management System — 2026
+          </p>
           <p className="mt-1 text-xs text-sidebar-foreground/50">
             Église MICEVA de Puits-Salés · Département des Enfants
           </p>

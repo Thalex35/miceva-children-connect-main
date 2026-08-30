@@ -85,8 +85,7 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
   const { user, profile } = useAuth();
   const all = useChildren();
 
-  const set = (key: keyof FormValues, value: string) =>
-    setValues((v) => ({ ...v, [key]: value }));
+  const set = (key: keyof FormValues, value: string) => setValues((v) => ({ ...v, [key]: value }));
 
   const duplicates = useMemo(() => {
     const name = normalize(`${values.last_name} ${values.first_name}`).trim();
@@ -236,7 +235,9 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
             <Select value={values.gender} onValueChange={(v) => set("gender", v)}>
-              <SelectTrigger id="gender"><SelectValue placeholder="Not provided" /></SelectTrigger>
+              <SelectTrigger id="gender">
+                <SelectValue placeholder="Not provided" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="F">Girl</SelectItem>
                 <SelectItem value="M">Boy</SelectItem>
@@ -271,7 +272,9 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select value={values.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="status">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
@@ -280,7 +283,12 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" value={values.notes} onChange={(e) => set("notes", e.target.value)} rows={3} />
+            <Textarea
+              id="notes"
+              value={values.notes}
+              onChange={(e) => set("notes", e.target.value)}
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>

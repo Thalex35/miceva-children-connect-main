@@ -32,7 +32,15 @@ export const EVENT_TYPES = [
 
 export const RECURRENCES = ["none", "daily", "weekly", "monthly", "custom_weekly"] as const;
 
-export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 export function dateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -48,7 +56,9 @@ function withTimeOf(base: Date, day: Date) {
 export function expandEvent(event: EventRow, from: Date, to: Date): Occurrence[] {
   if (!event.active) return [];
   const start = new Date(event.start_datetime);
-  const durationMs = event.end_datetime ? new Date(event.end_datetime).getTime() - start.getTime() : null;
+  const durationMs = event.end_datetime
+    ? new Date(event.end_datetime).getTime() - start.getTime()
+    : null;
   const until = event.recurrence_until ? new Date(event.recurrence_until + "T23:59:59") : null;
   const out: Occurrence[] = [];
 

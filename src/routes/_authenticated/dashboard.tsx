@@ -11,7 +11,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — MICEVA Children's Department" },
-      { name: "description", content: "Department overview: children, profiles, events and activities." },
+      {
+        name: "description",
+        content: "Department overview: children, profiles, events and activities.",
+      },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Dashboard — MICEVA Children's Department" },
       { property: "og:description", content: "Private department overview." },
@@ -178,7 +181,8 @@ function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-warning" aria-hidden /> Profiles needing information
+              <AlertTriangle className="size-4 text-warning" aria-hidden /> Profiles needing
+              information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -195,7 +199,9 @@ function DashboardPage() {
                   className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted"
                 >
                   <span className="truncate text-sm font-medium">{fullName(c)}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{info.percent}% complete</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {info.percent}% complete
+                  </span>
                 </Link>
               );
             })}

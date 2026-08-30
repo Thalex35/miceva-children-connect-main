@@ -118,7 +118,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Button>
             </SheetContent>
           </Sheet>
-          <span className="font-[family-name:var(--font-display)] text-base font-semibold">{title}</span>
+          <span className="font-[family-name:var(--font-display)] text-base font-semibold">
+            {title}
+          </span>
         </header>
 
         <main className="flex-1 px-4 pt-4 pb-24 sm:px-6 lg:px-8 lg:pt-8 lg:pb-10">{children}</main>

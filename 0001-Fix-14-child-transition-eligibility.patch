@@ -1,0 +1,124 @@
+﻿
+From acd94346d04cb6a8385c41ed1ed53fd28ecb4d41 Mon Sep 17 00:00:00 2001
+From: TheedDev User <louisjuste.theodore.jr@gmail.com>
+Date: Sun, 30 Aug 2026 04:25:36 +0000
+Subject: [PATCH] Fix 14+ child transition eligibility
+
+---
+ src/lib/children.ts                          | 21 +++++++++--
+ src/routes/_authenticated/children.index.tsx | 37 ++++++++++++--------
+ 2 files changed, 41 insertions(+), 17 deletions(-)
+
+diff --git a/src/lib/children.ts b/src/lib/children.ts
+index f73098c..7837b0e 100644
+--- a/src/lib/children.ts
++++ b/src/lib/children.ts
+@@ -67,8 +67,25 @@ export function childAge(child: Pick<Child, "date_of_birth" | "approximate_age">
+   return { age: null, approximate: false };
+ }
+ 
+-export function isEligibleForYoungTransition(child: Pick<Child, "date_of_birth" | "class_group">) {
+-  return child.class_group === "Children" && (ageFromDob(child.date_of_birth) ?? -1) >= 14;
++/**
++ * A child is eligible for the 14+ transition (Children -> Young) when they are
++ * currently recorded in the "Children" group and their age is 14 or older.
++ *
++ * Two things make this fragile if implemented naively, so both are handled here:
++ * - "Class / group" is a free-text field (no fixed list of values), so staff may
++ *   type "children", "Children ", "CHILDREN", etc. The comparison is normalized
++ *   (trimmed, lower-cased, accents stripped) using the same `normalize` helper
++ *   used for search, so any of those variants still match.
++ * - Not every child has an exact date of birth; some only have `approximate_age`.
++ *   `childAge` already knows how to fall back to that, so eligibility is based on
++ *   the same age a staff member sees displayed for the child, not only on the
++ *   exact date-of-birth calculation.
++ */
++export function isEligibleForYoungTransition(
++  child: Pick<Child, "date_of_birth" | "approximate_age" | "class_group">,
++) {
++  if (normalize(child.class_group).trim() !== "children") return false;
++  return (childAge(child).age ?? -1) >= 14;
+ }
+ 
+ export function primaryGuardian(guardians: Guardian[] | undefined) {
+diff --git a/src/routes/_authenticated/children.index.tsx b/src/routes/_authenticated/children.index.tsx
+index a588f0c..2aa303b 100644
+--- a/src/routes/_authenticated/children.index.tsx
++++ b/src/routes/_authenticated/children.index.tsx
+@@ -6,7 +6,6 @@ import { toast } from "sonner";
+ import { supabase } from "@/integrations/supabase/client";
+ import { childrenKey, useChildren } from "@/lib/queries";
+ import {
+-  ageFromDob,
+   childAge,
+   completeness,
+   formatDate,
+@@ -179,17 +178,21 @@ function ChildrenPage() {
+         </Button>
+       </div>
+ 
+-      {transitionCandidates.length > 0 && (
+-        <Card>
+-          <CardHeader>
+-            <CardTitle className="text-base">Children Ready for Transition</CardTitle>
++      <Card>
++        <CardHeader>
++          <CardTitle className="text-base">Children Ready for Transition</CardTitle>
++          <p className="text-sm text-muted-foreground">
++            Children in the Children group who are 14 or older can be moved to Young.
++          </p>
++        </CardHeader>
++        <CardContent className="space-y-2 pt-0">
++          {transitionCandidates.length === 0 ? (
+             <p className="text-sm text-muted-foreground">
+-              Children in the Children group who are 14 or older can be moved to Young.
++              No child in the Children group is currently 14 or older.
+             </p>
+-          </CardHeader>
+-          <CardContent className="space-y-2 pt-0">
+-            {transitionCandidates.map((child) => {
+-              const age = ageFromDob(child.date_of_birth);
++          ) : (
++            transitionCandidates.map((child) => {
++              const { age, approximate } = childAge(child);
+               return (
+                 <div
+                   key={child.id}
+@@ -204,7 +207,8 @@ function ChildrenPage() {
+                       {fullName(child)}
+                     </Link>
+                     <p className="text-sm text-muted-foreground">
+-                      DOB: {formatDate(child.date_of_birth)} · Age: {age} · Group: Children · ID:{" "}
++                      DOB: {formatDate(child.date_of_birth)} · Age: {age}
++                      {approximate ? " (approx.)" : ""} · Group: {child.class_group} · ID:{" "}
+                       {child.id}
+                     </p>
+                   </div>
+@@ -232,10 +236,10 @@ function ChildrenPage() {
+                   </AlertDialog>
+                 </div>
+               );
+-            })}
+-          </CardContent>
+-        </Card>
+-      )}
++            })
++          )}
++        </CardContent>
++      </Card>
+ 
+       <div className="relative">
+         <Search
+@@ -372,6 +376,9 @@ function ChildrenPage() {
+                   <Badge variant={info.complete ? "secondary" : "outline"}>
+                     {info.complete ? "Complete" : `${info.percent}% complete`}
+                   </Badge>
++                  {isEligibleForYoungTransition(child) && (
++                    <Badge variant="default">14+ · Ready for transition</Badge>
++                  )}
+                 </div>
+               </Link>
+               {g?.phone && (
+-- 
+2.43.0
+
