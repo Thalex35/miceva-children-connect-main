@@ -71,6 +71,23 @@ describe("isEligibleForYoungTransition", () => {
     );
   });
 
+  it("no DOB and no approximate age does not automatically transition the child", () => {
+    expect(
+      isEligibleForYoungTransition(
+        child({ date_of_birth: null, approximate_age: null, class_group: "" }),
+      ),
+    ).toBe(false);
+  });
+
+  it("a child already moved to Young is never picked up again (idempotency guard)", () => {
+    // Simulates re-running the transition scan on a child from a previous
+    // batch: once class_group reads "Young", the exact same eligibility
+    // check that selected them the first time now excludes them, so a
+    // second run can never reprocess or re-transition the same child.
+    const alreadyTransitioned = child({ date_of_birth: dobForAge(19), class_group: "Young" });
+    expect(isEligibleForYoungTransition(alreadyTransitioned)).toBe(false);
+  });
+
   it('15yo in "Children" is eligible', () => {
     expect(
       isEligibleForYoungTransition(
