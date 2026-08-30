@@ -20,6 +20,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChildrenIndexRouteImport } from './routes/_authenticated/children.index'
 import { Route as AuthenticatedChildrenChildIdRouteImport } from './routes/_authenticated/children.$childId'
 import { Route as AuthenticatedChildrenNewRouteImport } from './routes/_authenticated/children.new'
+import { Route as AuthenticatedYoungIndexRouteImport } from './routes/_authenticated/young.index'
 import { Route as AuthenticatedChildrenChildIdEditRouteImport } from './routes/_authenticated/children.$childId.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -80,6 +81,11 @@ const AuthenticatedChildrenNewRoute =
     path: '/children/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedYoungIndexRoute = AuthenticatedYoungIndexRouteImport.update({
+  id: '/young/',
+  path: '/young/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedChildrenChildIdEditRoute =
   AuthenticatedChildrenChildIdEditRouteImport.update({
     id: '/edit',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/children/new': typeof AuthenticatedChildrenNewRoute
   '/children/': typeof AuthenticatedChildrenIndexRoute
+  '/young/': typeof AuthenticatedYoungIndexRoute
   '/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/children/new': typeof AuthenticatedChildrenNewRoute
   '/children': typeof AuthenticatedChildrenIndexRoute
+  '/young': typeof AuthenticatedYoungIndexRoute
   '/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
 }
 export interface FileRoutesById {
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/_authenticated/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/_authenticated/children/new': typeof AuthenticatedChildrenNewRoute
   '/_authenticated/children/': typeof AuthenticatedChildrenIndexRoute
+  '/_authenticated/young/': typeof AuthenticatedYoungIndexRoute
   '/_authenticated/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
 }
 export interface FileRouteTypes {
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/children/$childId'
     | '/children/new'
     | '/children/'
+    | '/young/'
     | '/children/$childId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/children/$childId'
     | '/children/new'
     | '/children'
+    | '/young'
     | '/children/$childId/edit'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/_authenticated/children/$childId'
     | '/_authenticated/children/new'
     | '/_authenticated/children/'
+    | '/_authenticated/young/'
     | '/_authenticated/children/$childId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChildrenNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/young/': {
+      id: '/_authenticated/young/'
+      path: '/young'
+      fullPath: '/young/'
+      preLoaderRoute: typeof AuthenticatedYoungIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/children/$childId/edit': {
       id: '/_authenticated/children/$childId/edit'
       path: '/edit'
@@ -290,6 +309,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChildrenChildIdRoute: typeof AuthenticatedChildrenChildIdRouteWithChildren
   AuthenticatedChildrenNewRoute: typeof AuthenticatedChildrenNewRoute
   AuthenticatedChildrenIndexRoute: typeof AuthenticatedChildrenIndexRoute
+  AuthenticatedYoungIndexRoute: typeof AuthenticatedYoungIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -303,6 +323,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedChildrenChildIdRouteWithChildren,
   AuthenticatedChildrenNewRoute: AuthenticatedChildrenNewRoute,
   AuthenticatedChildrenIndexRoute: AuthenticatedChildrenIndexRoute,
+  AuthenticatedYoungIndexRoute: AuthenticatedYoungIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

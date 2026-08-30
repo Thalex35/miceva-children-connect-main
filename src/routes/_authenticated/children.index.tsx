@@ -11,6 +11,7 @@ import {
   formatDate,
   fullName,
   isEligibleForYoungTransition,
+  isYoungMember,
   NOT_PROVIDED,
   normalize,
   primaryGuardian,
@@ -113,13 +114,19 @@ function ChildrenPage() {
   };
 
   const groups = useMemo(
-    () => Array.from(new Set((data ?? []).map((c) => c.class_group).filter(Boolean))) as string[],
+    () =>
+      Array.from(new Set((data ?? []).map((c) => c.class_group).filter(Boolean))).filter(
+        (g) => normalize(g).trim() !== "young",
+      ) as string[],
     [data],
   );
 
   const rows = useMemo(() => {
     const q = normalize(term).trim();
     let list = (data ?? []).filter((c) => {
+      // The Children register only covers the Children department. Once a
+      // child has been transitioned, they belong on the Young page instead.
+      if (isYoungMember(c)) return false;
       const g = primaryGuardian(c.guardians);
       if (q) {
         const haystack = [
@@ -167,13 +174,15 @@ function ChildrenPage() {
     return list;
   }, [data, term, gender, group, status, sort, completenessFilter]);
 
+  const childrenTotal = useMemo(() => (data ?? []).filter((c) => !isYoungMember(c)).length, [data]);
+
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Children</h1>
           <p className="text-sm text-muted-foreground">
-            {rows.length} of {data?.length ?? 0} children
+            {rows.length} of {childrenTotal} children
           </p>
         </div>
         <Button asChild>
