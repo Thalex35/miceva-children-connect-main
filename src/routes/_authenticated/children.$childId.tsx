@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useMatch, useNavigate } from "@tanstack/
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, MessageCircle, Pencil, Phone, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useChild } from "@/lib/queries";
 import { childrenKey } from "@/lib/queries";
@@ -10,13 +11,14 @@ import { logActivity } from "@/lib/audit";
 import {
   childAge,
   completeness,
+  deleteRedirectTarget,
   formatDate,
   fullName,
   NOT_PROVIDED,
   telHref,
   type Guardian,
 } from "@/lib/children";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -96,6 +98,7 @@ function ChildDetail() {
   const { isAdmin, user, profile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (isLoading) {
     return (
@@ -123,8 +126,20 @@ function ChildDetail() {
   const { age, approximate } = childAge(child);
 
   const remove = async () => {
+    // Guard against a double-click/double-tap firing two delete requests
+    // while the first one is still in flight.
+    if (isDeleting) return;
+    setIsDeleting(true);
+
+    // Capture everything the audit log and the post-delete redirect need
+    // before the row is gone — the child record won't exist to read from
+    // afterwards.
+    const name = fullName(child);
+    const redirectTarget = deleteRedirectTarget(child);
+
     const { error } = await supabase.from("children").delete().eq("id", child.id);
     if (error) {
+      setIsDeleting(false);
       toast.error("This profile could not be deleted.");
       return;
     }
@@ -134,11 +149,11 @@ function ChildDetail() {
       action: "deleted",
       entityType: "child",
       entityId: child.id,
-      description: `Deleted ${fullName(child)}`,
+      description: `Deleted ${name}`,
     });
     await queryClient.invalidateQueries({ queryKey: childrenKey });
     toast.success("Profile deleted.");
-    navigate({ to: "/children" });
+    navigate({ to: redirectTarget });
   };
 
   return (
@@ -167,21 +182,36 @@ function ChildDetail() {
           {isAdmin && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" aria-label="Delete profile">
+                <Button variant="destructive" aria-label="Delete profile">
                   <Trash2 className="size-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this profile?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete child?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {fullName(child)} will be removed from the register permanently. This cannot be
-                    undone.
+                    Are you sure you want to permanently delete {fullName(child)}? This action
+                    cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={remove}>Delete</AlertDialogAction>
+                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      // Radix closes the dialog by default on Action click.
+                      // Prevent that so the "Deleting…" pending state is
+                      // actually visible; on success the whole page
+                      // navigates away (closing the dialog with it), and on
+                      // failure the dialog stays open showing the error so
+                      // the user can retry or cancel.
+                      e.preventDefault();
+                      void remove();
+                    }}
+                    disabled={isDeleting}
+                    className={buttonVariants({ variant: "destructive" })}
+                  >
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

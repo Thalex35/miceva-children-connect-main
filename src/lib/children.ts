@@ -97,6 +97,17 @@ export function isYoungMember(child: Pick<Child, "class_group">) {
   return normalize(child.class_group).trim() === "young";
 }
 
+/**
+ * Where to send the user after successfully deleting a child. A Young
+ * member's list lives at /young; every other child belongs on the main
+ * Children register at /children. This only inspects the (already-loaded)
+ * child record and has no side effects, so it's safe to compute before the
+ * delete request is even sent.
+ */
+export function deleteRedirectTarget(child: Pick<Child, "class_group">): "/young" | "/children" {
+  return isYoungMember(child) ? "/young" : "/children";
+}
+
 export function primaryGuardian(guardians: Guardian[] | undefined) {
   if (!guardians?.length) return null;
   return guardians.find((g) => g.is_primary) ?? guardians[0] ?? null;
