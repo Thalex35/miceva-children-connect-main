@@ -68,23 +68,27 @@ export function childAge(child: Pick<Child, "date_of_birth" | "approximate_age">
 }
 
 /**
- * A child is eligible for the 14+ transition (Children -> Young) when they are
- * currently recorded in the "Children" group and their age is 14 or older.
+ * A child is eligible for the 14+ transition (Children department -> Young
+ * department) whenever they are 14 or older and have not already been moved
+ * to Young.
  *
- * Two things make this fragile if implemented naively, so both are handled here:
- * - "Class / group" is a free-text field (no fixed list of values), so staff may
- *   type "children", "Children ", "CHILDREN", etc. The comparison is normalized
- *   (trimmed, lower-cased, accents stripped) using the same `normalize` helper
- *   used for search, so any of those variants still match.
- * - Not every child has an exact date of birth; some only have `approximate_age`.
- *   `childAge` already knows how to fall back to that, so eligibility is based on
- *   the same age a staff member sees displayed for the child, not only on the
- *   exact date-of-birth calculation.
+ * `class_group` is a free-text field on the child record (no fixed list of
+ * values, no default, not required by the registration form) — it is not a
+ * reliable marker of "currently in the Children department". A child can be
+ * 19 years old with `class_group` left completely blank, or set to any other
+ * label a staff member typed. So eligibility here is age-based first: any
+ * child whose age is 14+ is a transition candidate, *unless* their
+ * `class_group` already reads "Young" (normalized for case/accents/
+ * whitespace), which means the move already happened.
+ *
+ * `childAge` is used instead of `ageFromDob` alone so a child recorded with
+ * only `approximate_age` (no exact date of birth) is still correctly
+ * evaluated, using the same age a staff member sees displayed for them.
  */
 export function isEligibleForYoungTransition(
   child: Pick<Child, "date_of_birth" | "approximate_age" | "class_group">,
 ) {
-  if (normalize(child.class_group).trim() !== "children") return false;
+  if (normalize(child.class_group).trim() === "young") return false;
   return (childAge(child).age ?? -1) >= 14;
 }
 

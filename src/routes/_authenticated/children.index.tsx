@@ -85,11 +85,16 @@ function ChildrenPage() {
   );
 
   const moveToYoung = async (childId: string, childName: string) => {
+    // Guard against re-transitioning a child that was already moved to Young
+    // by someone else since this list was loaded. class_group can be NULL, so
+    // a plain .neq("class_group", "Young") would (per SQL NULL semantics)
+    // wrongly exclude children whose class_group is blank — the .or() below
+    // treats "blank" and "not Young" as both acceptable starting states.
     const { data: updated, error } = await supabase
       .from("children")
       .update({ class_group: "Young" })
       .eq("id", childId)
-      .eq("class_group", "Children")
+      .or("class_group.is.null,class_group.neq.Young")
       .select("id")
       .maybeSingle();
 
@@ -98,7 +103,7 @@ function ChildrenPage() {
       return;
     }
     if (!updated) {
-      toast.error("This child is no longer in the Children group. Refresh and try again.");
+      toast.error("This child is already in the Young group. Refresh and try again.");
       await queryClient.invalidateQueries({ queryKey: childrenKey });
       return;
     }
@@ -182,13 +187,13 @@ function ChildrenPage() {
         <CardHeader>
           <CardTitle className="text-base">Children Ready for Transition</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Children in the Children group who are 14 or older can be moved to Young.
+            Children who are 14 or older and not yet in the Young group can be moved there.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
           {transitionCandidates.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No child in the Children group is currently 14 or older.
+              No child 14 or older is waiting to be moved to Young.
             </p>
           ) : (
             transitionCandidates.map((child) => {
@@ -208,8 +213,8 @@ function ChildrenPage() {
                     </Link>
                     <p className="text-sm text-muted-foreground">
                       DOB: {formatDate(child.date_of_birth)} · Age: {age}
-                      {approximate ? " (approx.)" : ""} · Group: {child.class_group} · ID:{" "}
-                      {child.id}
+                      {approximate ? " (approx.)" : ""} · Group: {child.class_group || NOT_PROVIDED}{" "}
+                      · ID: {child.id}
                     </p>
                   </div>
                   <AlertDialog>
