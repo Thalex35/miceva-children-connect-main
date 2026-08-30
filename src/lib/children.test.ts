@@ -1,5 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { childAge, isEligibleForYoungTransition, isYoungMember, type Child } from "./children";
+import {
+  childAge,
+  deleteRedirectTarget,
+  isEligibleForYoungTransition,
+  isYoungMember,
+  type Child,
+} from "./children";
 
 type EligibilityInput = Pick<Child, "date_of_birth" | "approximate_age" | "class_group">;
 
@@ -135,5 +141,34 @@ describe("childAge", () => {
   it("returns null age when neither is available", () => {
     const result = childAge({ date_of_birth: null, approximate_age: null });
     expect(result.age).toBeNull();
+  });
+});
+
+describe("deleteRedirectTarget", () => {
+  // Delete Child must send the user back to whichever list the deleted
+  // record actually belonged to — a Young member's list is /young, and
+  // every other child (Children, blank, or any other group) is /children.
+  it('sends a Young member ("Young") to /young', () => {
+    expect(deleteRedirectTarget({ class_group: "Young" })).toBe("/young");
+  });
+
+  it('sends a Young member with case/whitespace variants ("  young  ") to /young', () => {
+    expect(deleteRedirectTarget({ class_group: "  young  " })).toBe("/young");
+  });
+
+  it('sends a "Children" group member to /children', () => {
+    expect(deleteRedirectTarget({ class_group: "Children" })).toBe("/children");
+  });
+
+  it("sends a blank group member to /children", () => {
+    expect(deleteRedirectTarget({ class_group: "" })).toBe("/children");
+  });
+
+  it("sends a null group member to /children", () => {
+    expect(deleteRedirectTarget({ class_group: null })).toBe("/children");
+  });
+
+  it('sends an arbitrary other group ("Class A") to /children', () => {
+    expect(deleteRedirectTarget({ class_group: "Class A" })).toBe("/children");
   });
 });
