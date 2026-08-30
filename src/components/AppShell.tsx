@@ -8,6 +8,7 @@ import {
   Settings,
   Users,
   UsersRound,
+  UserRound,
   FileBarChart,
   Menu,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/children", label: "Children", icon: Users },
+  { to: "/young", label: "Young", icon: UserRound },
   { to: "/administration", label: "Administration", icon: UsersRound },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/activities", label: "Activities", icon: Repeat },

@@ -88,8 +88,13 @@ export function childAge(child: Pick<Child, "date_of_birth" | "approximate_age">
 export function isEligibleForYoungTransition(
   child: Pick<Child, "date_of_birth" | "approximate_age" | "class_group">,
 ) {
-  if (normalize(child.class_group).trim() === "young") return false;
+  if (isYoungMember(child)) return false;
   return (childAge(child).age ?? -1) >= 14;
+}
+
+/** True once a child's `class_group` has been set to Young (case/accents/whitespace-insensitive). */
+export function isYoungMember(child: Pick<Child, "class_group">) {
+  return normalize(child.class_group).trim() === "young";
 }
 
 export function primaryGuardian(guardians: Guardian[] | undefined) {
