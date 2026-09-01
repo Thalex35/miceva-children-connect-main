@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useAuditLogs } from "@/lib/queries";
@@ -27,10 +28,30 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { profile, role } = useAuth();
+  const queryClient = useQueryClient();
   const audit = useAuditLogs(100);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [clearingLog, setClearingLog] = useState(false);
+
+  const clearActivityLog = async () => {
+    if (!window.confirm("Clear the activity log for everyone? This cannot be undone.")) {
+      return;
+    }
+
+    setClearingLog(true);
+    const { error } = await supabase.from("audit_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    setClearingLog(false);
+
+    if (error) {
+      toast.error("The activity log could not be cleared.");
+      return;
+    }
+
+    toast.success("Activity log cleared.");
+    await queryClient.invalidateQueries({ queryKey: ["audit_logs"] });
+  };
 
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,8 +138,19 @@ function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-base">Activity log</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearActivityLog}
+            disabled={clearingLog}
+            className="gap-2"
+          >
+            {clearingLog ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            Clear log
+          </Button>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
           {audit.isLoading && <Skeleton className="h-32 w-full" />}

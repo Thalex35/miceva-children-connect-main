@@ -1,9 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import {
+  buildChildGuardianRows,
   childAge,
   deleteRedirectTarget,
   isEligibleForYoungTransition,
   isYoungMember,
+  joinClassGroup,
+  splitClassGroup,
   type Child,
 } from "./children";
 
@@ -158,6 +161,45 @@ describe("childAge", () => {
   it("returns null age when neither is available", () => {
     const result = childAge({ date_of_birth: null, approximate_age: null });
     expect(result.age).toBeNull();
+  });
+});
+
+describe("splitClassGroup and joinClassGroup", () => {
+  it("splits a stored class/group value into separate fields", () => {
+    expect(splitClassGroup("NSI / Group A")).toEqual({ className: "NSI", groupName: "Group A" });
+    expect(splitClassGroup("NSI")).toEqual({ className: "NSI", groupName: "" });
+    expect(splitClassGroup("   ")).toEqual({ className: "", groupName: "" });
+  });
+
+  it("rejoins class and group values back into a single stored field", () => {
+    expect(joinClassGroup("NSI", "Group A")).toBe("NSI / Group A");
+    expect(joinClassGroup("NSI", "")).toBe("NSI");
+    expect(joinClassGroup("", "")).toBeNull();
+  });
+});
+
+describe("buildChildGuardianRows", () => {
+  it("creates exactly one primary guardian row from the allowed fields", () => {
+    const rows = buildChildGuardianRows(
+      "child-1",
+      "Marie Jean",
+      "+1 555 123 4567",
+    );
+
+    expect(rows).toEqual([
+      {
+        child_id: "child-1",
+        name: "Marie Jean",
+        phone: "+1 555 123 4567",
+        relationship: "Parent / Guardian",
+        is_primary: true,
+        is_emergency: false,
+      },
+    ]);
+  });
+
+  it("returns no rows when both guardian fields are empty", () => {
+    expect(buildChildGuardianRows("child-2", "   ", "")).toEqual([]);
   });
 });
 

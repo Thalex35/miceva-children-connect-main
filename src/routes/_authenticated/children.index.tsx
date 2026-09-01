@@ -1,23 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Phone, Plus, Search, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
-import { childrenKey, useChildren } from "@/lib/queries";
-import { transitionChildToYoung } from "@/lib/transitions";
+import { useChildren } from "@/lib/queries";
 import {
   childAge,
   completeness,
-  formatDate,
   fullName,
-  isEligibleForYoungTransition,
   isYoungMember,
   NOT_PROVIDED,
   normalize,
   primaryGuardian,
   telHref,
-  type ChildWithGuardians,
 } from "@/lib/children";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,18 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Search = {
   completeness?: "all" | "incomplete" | "complete";
@@ -69,9 +50,7 @@ export const Route = createFileRoute("/_authenticated/children/")({
 
 function ChildrenPage() {
   const { data, isLoading, isError } = useChildren();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
   const search = Route.useSearch();
   const [term, setTerm] = useState("");
   const [gender, setGender] = useState("all");
@@ -79,35 +58,6 @@ function ChildrenPage() {
   const [status, setStatus] = useState("active");
   const [sort, setSort] = useState("name");
   const completenessFilter = search.completeness ?? "all";
-
-  const transitionCandidates = useMemo(
-    () =>
-      (data ?? [])
-        .filter(isEligibleForYoungTransition)
-        .sort((a, b) => fullName(a).localeCompare(fullName(b), "fr")),
-    [data],
-  );
-
-  const moveToYoung = async (child: ChildWithGuardians) => {
-    const result = await transitionChildToYoung(
-      child,
-      { userId: user?.id, username: profile?.username },
-      "manual",
-    );
-
-    if (result.status === "error") {
-      toast.error("The child could not be moved to Young. Please try again.");
-      return;
-    }
-    if (result.status === "already-young") {
-      toast.error("This child is already in the Young group. Refresh and try again.");
-      await queryClient.invalidateQueries({ queryKey: childrenKey });
-      return;
-    }
-
-    await queryClient.invalidateQueries({ queryKey: childrenKey });
-    toast.success(`${fullName(child)} was moved to Young.`);
-  };
 
   const groups = useMemo(
     () =>
@@ -187,68 +137,6 @@ function ChildrenPage() {
           </Link>
         </Button>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Children Ready for Transition</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Children 14 or older are moved to Young automatically. Anything still waiting here can
-            be moved manually.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2 pt-0">
-          {transitionCandidates.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No child 14 or older is waiting to be moved to Young.
-            </p>
-          ) : (
-            transitionCandidates.map((child) => {
-              const { age, approximate } = childAge(child);
-              return (
-                <div
-                  key={child.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
-                >
-                  <div className="min-w-0">
-                    <Link
-                      to="/children/$childId"
-                      params={{ childId: child.id }}
-                      className="font-medium hover:underline"
-                    >
-                      {fullName(child)}
-                    </Link>
-                    <p className="text-sm text-muted-foreground">
-                      DOB: {formatDate(child.date_of_birth)} · Age: {age}
-                      {approximate ? " (approx.)" : ""} · Group: {child.class_group || NOT_PROVIDED}{" "}
-                      · ID: {child.id}
-                    </p>
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm">Move to Young</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Move {fullName(child)} to Young?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will move the child from the Children group to the Young group. No
-                          other information will be changed.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => void moveToYoung(child)}>
-                          Move to Young
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
 
       <div className="relative">
         <Search
@@ -385,9 +273,6 @@ function ChildrenPage() {
                   <Badge variant={info.complete ? "secondary" : "outline"}>
                     {info.complete ? "Complete" : `${info.percent}% complete`}
                   </Badge>
-                  {isEligibleForYoungTransition(child) && (
-                    <Badge variant="default">14+ · Ready for transition</Badge>
-                  )}
                 </div>
               </Link>
               {g?.phone && (

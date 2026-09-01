@@ -17,6 +17,15 @@ function isTrustedUrl(value) {
   }
 }
 
+function isContactUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "mailto:" || url.protocol === "tel:";
+  } catch {
+    return false;
+  }
+}
+
 function createWindow() {
   const window = new BrowserWindow({
     width: 1280,
