@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, CalendarDays, Repeat, UsersRound, Users } from "lucide-react";
-import { useChildren, useEvents, useAdminMembers } from "@/lib/queries";
+import { AlertTriangle, Bell, CalendarDays, Repeat, UsersRound, Users, X } from "lucide-react";
+import { useChildren, useEventExceptions, useEvents, useAdminMembers } from "@/lib/queries";
 import { completeness, fullName } from "@/lib/children";
 import { describeRecurrence, expandEvents, formatTime } from "@/lib/recurrence";
+import { useEventReminders } from "@/lib/useEventReminders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 
@@ -73,14 +75,18 @@ function DashboardPage() {
   const { profile } = useAuth();
   const children = useChildren();
   const events = useEvents();
+  const exceptions = useEventExceptions();
   const members = useAdminMembers();
+  const { reminders, dismiss } = useEventReminders();
 
   const loading = children.isLoading || events.isLoading || members.isLoading;
 
   const incomplete = (children.data ?? []).filter((c) => !completeness(c).complete);
   const now = new Date();
   const horizon = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 60);
-  const occurrences = expandEvents(events.data ?? [], now, horizon);
+  const occurrences = expandEvents(events.data ?? [], now, horizon, exceptions.data ?? []).filter(
+    (o) => !o.cancelled,
+  );
   const nextEvent = occurrences.find((o) => o.event.recurrence === "none");
   const nextRecurring = occurrences.find((o) => o.event.recurrence !== "none");
 
@@ -105,6 +111,43 @@ function DashboardPage() {
           Église MICEVA de Puits-Salés — Département des Enfants
         </p>
       </div>
+
+      {reminders.length > 0 && (
+        <div className="space-y-2">
+          {reminders.map((r) => (
+            <Card key={r.key} className="border-primary/40 bg-primary/5">
+              <CardContent className="flex items-start justify-between gap-3 p-4">
+                <div className="flex items-start gap-3">
+                  <Bell className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                  <div>
+                    <p className="text-xs font-medium text-primary">Upcoming event</p>
+                    <p className="text-sm font-semibold">{r.occurrence.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.window.label} ·{" "}
+                      {r.occurrence.start.toLocaleDateString("en-GB", {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "short",
+                      })}{" "}
+                      · {formatTime(r.occurrence.start)}
+                      {r.occurrence.location ? ` · ${r.occurrence.location}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 shrink-0"
+                  aria-label="Dismiss reminder"
+                  onClick={() => dismiss(r.key)}
+                >
+                  <X className="size-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -132,7 +175,7 @@ function DashboardPage() {
         />
         <StatCard
           label="Next activity"
-          value={nextRecurring ? nextRecurring.event.title : "None"}
+          value={nextRecurring ? nextRecurring.title : "None"}
           hint={
             nextRecurring
               ? `${describeRecurrence(nextRecurring.event)} · ${formatTime(nextRecurring.start)}`
@@ -157,7 +200,7 @@ function DashboardPage() {
             {occurrences.slice(0, 6).map((o, i) => (
               <div key={`${o.event.id}-${i}`} className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{o.event.title}</p>
+                  <p className="truncate text-sm font-medium">{o.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {o.start.toLocaleDateString("en-GB", {
                       weekday: "short",
@@ -165,14 +208,14 @@ function DashboardPage() {
                       month: "short",
                     })}{" "}
                     · {formatTime(o.start)}
-                    {o.event.location ? ` · ${o.event.location}` : ""}
+                    {o.location ? ` · ${o.location}` : ""}
                   </p>
                 </div>
               </div>
             ))}
             {nextEvent && (
               <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-                Next one-time event: <span className="font-medium">{nextEvent.event.title}</span>
+                Next one-time event: <span className="font-medium">{nextEvent.title}</span>
               </p>
             )}
           </CardContent>

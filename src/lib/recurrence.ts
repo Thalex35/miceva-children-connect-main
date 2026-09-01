@@ -14,11 +14,30 @@ export type EventRow = {
   notes: string | null;
 };
 
+export type EventException = {
+  id: string;
+  event_id: string;
+  occurrence_date: string;
+  cancelled: boolean;
+  override_title: string | null;
+  override_start_time: string | null;
+  override_end_time: string | null;
+  override_location: string | null;
+  notes: string | null;
+};
+
 export type Occurrence = {
   event: EventRow;
   start: Date;
   end: Date | null;
   dateKey: string;
+  cancelled: boolean;
+  overridden: boolean;
+  exception: EventException | null;
+  /** Title after any override is applied — use this for display instead of event.title. */
+  title: string;
+  /** Location after any override is applied — use this for display instead of event.location. */
+  location: string | null;
 };
 
 export const EVENT_TYPES = [
@@ -52,8 +71,29 @@ function withTimeOf(base: Date, day: Date) {
   return d;
 }
 
-/** Expands an event into concrete occurrences inside [from, to]. */
-export function expandEvent(event: EventRow, from: Date, to: Date): Occurrence[] {
+/** Applies an override time string ("HH:MM" or "HH:MM:SS") onto a specific day. */
+function withOverrideTime(day: Date, time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date(day);
+  d.setHours(h ?? 0, m ?? 0, 0, 0);
+  return d;
+}
+
+function findException(
+  exceptions: EventException[],
+  eventId: string,
+  key: string,
+): EventException | null {
+  return exceptions.find((e) => e.event_id === eventId && e.occurrence_date === key) ?? null;
+}
+
+/** Expands an event into concrete occurrences inside [from, to], applying any per-occurrence exceptions. */
+export function expandEvent(
+  event: EventRow,
+  from: Date,
+  to: Date,
+  exceptions: EventException[] = [],
+): Occurrence[] {
   if (!event.active) return [];
   const start = new Date(event.start_datetime);
   const durationMs = event.end_datetime
@@ -63,15 +103,39 @@ export function expandEvent(event: EventRow, from: Date, to: Date): Occurrence[]
   const out: Occurrence[] = [];
 
   const push = (day: Date) => {
-    const s = withTimeOf(start, day);
+    let s = withTimeOf(start, day);
     if (s < from || s > to) return;
     if (until && s > until) return;
     if (s < new Date(start.getFullYear(), start.getMonth(), start.getDate())) return;
+
+    const key = dateKey(s);
+    const exception = findException(exceptions, event.id, key);
+
+    let e = durationMs !== null ? new Date(s.getTime() + durationMs) : null;
+    if (exception?.override_start_time) s = withOverrideTime(s, exception.override_start_time);
+    if (exception?.override_end_time) {
+      e = withOverrideTime(s, exception.override_end_time);
+    } else if (exception?.override_start_time && durationMs !== null) {
+      // Start moved but no explicit end override — keep the original duration.
+      e = new Date(s.getTime() + durationMs);
+    }
+
     out.push({
       event,
       start: s,
-      end: durationMs !== null ? new Date(s.getTime() + durationMs) : null,
-      dateKey: dateKey(s),
+      end: e,
+      dateKey: key,
+      cancelled: exception?.cancelled ?? false,
+      overridden: Boolean(
+        exception &&
+        (exception.override_title ||
+          exception.override_start_time ||
+          exception.override_end_time ||
+          exception.override_location),
+      ),
+      exception,
+      title: exception?.override_title || event.title,
+      location: exception?.override_location || event.location,
     });
   };
 
@@ -97,9 +161,14 @@ export function expandEvent(event: EventRow, from: Date, to: Date): Occurrence[]
   return out;
 }
 
-export function expandEvents(events: EventRow[], from: Date, to: Date): Occurrence[] {
+export function expandEvents(
+  events: EventRow[],
+  from: Date,
+  to: Date,
+  exceptions: EventException[] = [],
+): Occurrence[] {
   return events
-    .flatMap((e) => expandEvent(e, from, to))
+    .flatMap((e) => expandEvent(e, from, to, exceptions))
     .sort((a, b) => a.start.getTime() - b.start.getTime());
 }
 

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ChildWithGuardians } from "@/lib/children";
-import type { EventRow } from "@/lib/recurrence";
+import type { EventException, EventRow } from "@/lib/recurrence";
 
 export type AdminMember = {
   id: string;
@@ -26,6 +26,7 @@ export type AuditRow = {
 
 export const childrenKey = ["children"] as const;
 export const eventsKey = ["events"] as const;
+export const eventExceptionsKey = ["event_exceptions"] as const;
 export const adminKey = ["administration_members"] as const;
 export const auditKey = ["audit_logs"] as const;
 
@@ -69,6 +70,17 @@ export function useEvents() {
         .order("start_datetime", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as EventRow[];
+    },
+  });
+}
+
+export function useEventExceptions() {
+  return useQuery({
+    queryKey: eventExceptionsKey,
+    queryFn: async (): Promise<EventException[]> => {
+      const { data, error } = await supabase.from("event_exceptions").select("*");
+      if (error) throw error;
+      return (data ?? []) as unknown as EventException[];
     },
   });
 }
