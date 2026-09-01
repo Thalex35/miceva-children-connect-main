@@ -15,6 +15,7 @@ import {
   formatDate,
   fullName,
   NOT_PROVIDED,
+  splitClassGroup,
   telHref,
   type Guardian,
 } from "@/lib/children";
@@ -246,11 +247,15 @@ function ChildDetail() {
             value={child.approximate_age ? `${child.approximate_age} years` : null}
           />
           <Row label="Address" value={child.address} />
-          <Row label="Class / group" value={child.class_group} />
-          <Row
-            label="Registration date"
-            value={child.registration_date ? formatDate(child.registration_date) : null}
-          />
+          {(() => {
+            const classInfo = splitClassGroup(child.class_group);
+            return (
+              <>
+                <Row label="Class" value={classInfo.className || null} />
+                <Row label="Group" value={classInfo.groupName || null} />
+              </>
+            );
+          })()}
           <Row label="Status" value={child.status === "active" ? "Active" : "Inactive"} />
         </CardContent>
       </Card>

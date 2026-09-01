@@ -8,7 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { logActivity } from "@/lib/audit";
 import { childrenKey, useChildren } from "@/lib/queries";
-import { fullName, normalize, type ChildWithGuardians } from "@/lib/children";
+import {
+  ageFromDob,
+  fullName,
+  getDerivedGroupName,
+  joinClassGroup,
+  normalize,
+  splitClassGroup,
+  type ChildWithGuardians,
+} from "@/lib/children";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,24 +43,19 @@ const schema = z.object({
   approximate_age: z.string().trim(),
   gender: z.string(),
   address: z.string().trim().max(300),
-  class_group: z.string().trim().max(80),
-  registration_date: z.string().trim(),
+  class_name: z.string().trim().max(80),
+  group_name: z.string().trim().max(80),
   status: z.string(),
   notes: z.string().trim().max(2000),
   guardian_name: z.string().trim().max(120),
   guardian_phone: phoneSchema,
-  guardian2_name: z.string().trim().max(120),
-  guardian2_phone: phoneSchema,
-  emergency_name: z.string().trim().max(120),
-  emergency_phone: phoneSchema,
 });
 
 type FormValues = z.infer<typeof schema>;
 
 function initial(child?: ChildWithGuardians): FormValues {
   const primary = child?.guardians.find((g) => g.is_primary && !g.is_emergency);
-  const second = child?.guardians.find((g) => !g.is_primary && !g.is_emergency);
-  const emergency = child?.guardians.find((g) => g.is_emergency);
+  const classInfo = splitClassGroup(child?.class_group ?? "");
   return {
     first_name: child?.first_name ?? "",
     last_name: child?.last_name ?? "",
@@ -60,16 +63,12 @@ function initial(child?: ChildWithGuardians): FormValues {
     approximate_age: child?.approximate_age != null ? String(child.approximate_age) : "",
     gender: child?.gender ?? "",
     address: child?.address ?? "",
-    class_group: child?.class_group ?? "",
-    registration_date: child?.registration_date ?? "",
+    class_name: classInfo.className,
+    group_name: getDerivedGroupName(child?.date_of_birth, child?.approximate_age),
     status: child?.status ?? "active",
     notes: child?.notes ?? "",
     guardian_name: primary?.name ?? "",
     guardian_phone: primary?.phone ?? "",
-    guardian2_name: second?.name ?? "",
-    guardian2_phone: second?.phone ?? "",
-    emergency_name: emergency?.name ?? "",
-    emergency_phone: emergency?.phone ?? "",
   };
 }
 
@@ -86,6 +85,20 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
   const all = useChildren();
 
   const set = (key: keyof FormValues, value: string) => setValues((v) => ({ ...v, [key]: value }));
+
+  const updateAgeAndGroup = (nextDob: string, nextApproxAge: string) => {
+    const age = nextApproxAge.trim() === "" ? (nextDob ? ageFromDob(nextDob) : null) : Number(nextApproxAge);
+    const derivedGroupName = getDerivedGroupName(nextDob, age ?? nextApproxAge);
+    set("date_of_birth", nextDob);
+    set("approximate_age", nextApproxAge);
+    set("group_name", derivedGroupName);
+  };
+
+  const updateDobAndAge = (value: string) => {
+    const age = value ? ageFromDob(value) : null;
+    const nextAge = age !== null ? String(age) : "";
+    updateAgeAndGroup(value, nextAge);
+  };
 
   const duplicates = useMemo(() => {
     const name = normalize(`${values.last_name} ${values.first_name}`).trim();
@@ -130,6 +143,8 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
     }
 
     setSaving(true);
+    const derivedGroupName = getDerivedGroupName(v.date_of_birth, v.approximate_age);
+    const normalizedGroupName = v.group_name.trim() || derivedGroupName;
     const payload = {
       first_name: v.first_name.trim(),
       last_name: v.last_name.trim(),
@@ -137,8 +152,7 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
       approximate_age: v.approximate_age.trim() === "" ? null : Number(v.approximate_age),
       gender: nullIfEmpty(v.gender),
       address: nullIfEmpty(v.address),
-      class_group: nullIfEmpty(v.class_group),
-      registration_date: nullIfEmpty(v.registration_date),
+      class_group: joinClassGroup(v.class_name, normalizedGroupName),
       status: v.status,
       notes: nullIfEmpty(v.notes),
       updated_by: user?.id ?? null,
@@ -178,22 +192,6 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
           is_primary: true,
           is_emergency: false,
         },
-        {
-          child_id: childId,
-          name: nullIfEmpty(v.guardian2_name),
-          phone: nullIfEmpty(v.guardian2_phone),
-          relationship: "Second guardian",
-          is_primary: false,
-          is_emergency: false,
-        },
-        {
-          child_id: childId,
-          name: nullIfEmpty(v.emergency_name),
-          phone: nullIfEmpty(v.emergency_phone),
-          relationship: "Emergency contact",
-          is_primary: false,
-          is_emergency: true,
-        },
       ].filter((r) => r.name || r.phone);
       if (rows.length) await supabase.from("guardians").insert(rows);
     }
@@ -230,8 +228,30 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           {field("last_name", "Last name *")}
           {field("first_name", "First name *")}
-          {field("date_of_birth", "Date of birth", "date")}
-          {field("approximate_age", "Approximate age (if no date of birth)", "number")}
+          <div className="space-y-2">
+            <Label htmlFor="date_of_birth">Date of birth</Label>
+            <Input
+              id="date_of_birth"
+              type="date"
+              value={values.date_of_birth}
+              onChange={(e) => updateDobAndAge(e.target.value)}
+            />
+            {errors.date_of_birth && <p className="text-xs text-destructive">{errors.date_of_birth}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="approximate_age">Approximate age</Label>
+            <Input
+              id="approximate_age"
+              type="number"
+              min="0"
+              max="120"
+              value={values.approximate_age}
+              onChange={(e) => updateAgeAndGroup(values.date_of_birth, e.target.value)}
+            />
+            {errors.approximate_age && (
+              <p className="text-xs text-destructive">{errors.approximate_age}</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="gender">Gender</Label>
             <Select value={values.gender} onValueChange={(v) => set("gender", v)}>
@@ -244,7 +264,16 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
               </SelectContent>
             </Select>
           </div>
-          {field("class_group", "Class / group")}
+          {field("class_name", "Class")}
+          <div className="space-y-2">
+            <Label htmlFor="group_name">Group</Label>
+            <Input
+              id="group_name"
+              value={values.group_name}
+              readOnly
+              className="bg-muted/30"
+            />
+          </div>
           {field("address", "Address")}
         </CardContent>
       </Card>
@@ -256,10 +285,6 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           {field("guardian_name", "Guardian name")}
           {field("guardian_phone", "Guardian phone", "tel")}
-          {field("guardian2_name", "Second guardian")}
-          {field("guardian2_phone", "Second phone", "tel")}
-          {field("emergency_name", "Emergency contact")}
-          {field("emergency_phone", "Emergency phone", "tel")}
         </CardContent>
       </Card>
 
@@ -268,7 +293,6 @@ export function ChildForm({ child }: { child?: ChildWithGuardians }) {
           <CardTitle className="text-base">Department information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          {field("registration_date", "Registration date", "date")}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select value={values.status} onValueChange={(v) => set("status", v)}>

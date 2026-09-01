@@ -94,7 +94,9 @@ export function isEligibleForYoungTransition(
 
 /** True once a child's `class_group` has been set to Young (case/accents/whitespace-insensitive). */
 export function isYoungMember(child: Pick<Child, "class_group">) {
-  return normalize(child.class_group).trim() === "young";
+  const value = normalize(child.class_group).trim();
+  if (!value) return false;
+  return value === "young" || value.split("/").some((part) => part.trim() === "young");
 }
 
 /**
@@ -111,6 +113,74 @@ export function deleteRedirectTarget(child: Pick<Child, "class_group">): "/young
 export function primaryGuardian(guardians: Guardian[] | undefined) {
   if (!guardians?.length) return null;
   return guardians.find((g) => g.is_primary) ?? guardians[0] ?? null;
+}
+
+export function splitClassGroup(value: string | null | undefined) {
+  const raw = (value ?? "").trim();
+  if (!raw) return { className: "", groupName: "" };
+
+  const parts = raw.split("/").map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0) {
+    return { className: "", groupName: "" };
+  }
+  if (parts.length === 1) {
+    return { className: "", groupName: parts[0] || "" };
+  }
+
+  return {
+    className: parts[0] || "",
+    groupName: parts.slice(1).join(" / "),
+  };
+}
+
+export function joinClassGroup(className: string | null | undefined, groupName: string | null | undefined) {
+  const classValue = (className ?? "").trim();
+  const groupValue = (groupName ?? "").trim();
+
+  if (!classValue && !groupValue) return null;
+  if (!classValue) return groupValue;
+  if (!groupValue) return classValue;
+  return `${classValue} / ${groupValue}`;
+}
+
+export function getDerivedGroupName(
+  dateOfBirth: string | null | undefined,
+  approximateAge: number | string | null | undefined,
+) {
+  const ageValue =
+    typeof approximateAge === "string" ? approximateAge.trim() : approximateAge ?? null;
+  const age =
+    ageValue !== null && ageValue !== ""
+      ? Number(ageValue)
+      : dateOfBirth
+        ? childAge({ date_of_birth: dateOfBirth, approximate_age: null }).age
+        : null;
+
+  return age !== null && age >= 14 ? "Young" : "Child";
+}
+
+export function buildChildGuardianRows(
+  childId: string,
+  guardianName: string | null | undefined,
+  guardianPhone: string | null | undefined,
+) {
+  const normalizedName = guardianName?.trim() ?? "";
+  const normalizedPhone = guardianPhone?.trim() ?? "";
+
+  if (!normalizedName && !normalizedPhone) {
+    return [];
+  }
+
+  return [
+    {
+      child_id: childId,
+      name: normalizedName || null,
+      phone: normalizedPhone || null,
+      relationship: "Parent / Guardian",
+      is_primary: true,
+      is_emergency: false,
+    },
+  ];
 }
 
 const COMPLETENESS_FIELDS = [
