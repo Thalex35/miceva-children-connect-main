@@ -24,11 +24,25 @@ export type AuditRow = {
   created_at: string;
 };
 
+export type NotificationRow = {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  related_event_id: string | null;
+  event_occurrence_date: string | null;
+  scheduled_for: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 export const childrenKey = ["children"] as const;
 export const eventsKey = ["events"] as const;
 export const eventExceptionsKey = ["event_exceptions"] as const;
 export const adminKey = ["administration_members"] as const;
 export const auditKey = ["audit_logs"] as const;
+export const notificationsKey = ["notifications"] as const;
 
 export function useChildren() {
   return useQuery({
@@ -110,6 +124,21 @@ export function useAuditLogs(limit = 100) {
         .limit(limit);
       if (error) throw error;
       return (data ?? []) as unknown as AuditRow[];
+    },
+  });
+}
+
+export function useNotifications(limit = 10) {
+  return useQuery({
+    queryKey: [...notificationsKey, limit],
+    queryFn: async (): Promise<NotificationRow[]> => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as unknown as NotificationRow[];
     },
   });
 }

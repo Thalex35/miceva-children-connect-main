@@ -124,7 +124,7 @@ export function splitClassGroup(value: string | null | undefined) {
     return { className: "", groupName: "" };
   }
   if (parts.length === 1) {
-    return { className: "", groupName: parts[0] || "" };
+    return { className: parts[0] || "", groupName: "" };
   }
 
   return {
