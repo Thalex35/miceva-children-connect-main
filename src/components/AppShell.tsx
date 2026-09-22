@@ -12,15 +12,18 @@ import {
   UserRound,
   FileBarChart,
   Menu,
+  Cake,
+  Wallet,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { notificationsKey, useEventExceptions, useEvents, useNotifications } from "@/lib/queries";
+import { notificationsKey, useEventExceptions, useEvents, useNotifications, useChildren } from "@/lib/queries";
 import {
   markAllNotificationsAsRead,
   markNotificationAsRead,
   syncEventNotifications,
+  syncBirthdayNotifications,
 } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,22 +38,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/children", label: "Children", icon: Users },
-  { to: "/young", label: "Young", icon: UserRound },
-  { to: "/administration", label: "Administration", icon: UsersRound },
-  { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/activities", label: "Activities", icon: Repeat },
-  { to: "/reports", label: "Reports", icon: FileBarChart },
-  { to: "/settings", label: "Settings", icon: Settings },
-] as const;
+function NavLinks({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: boolean }) {
+  const NAV = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/children", label: "Children", icon: Users },
+    { to: "/young", label: "Young", icon: UserRound },
+    { to: "/anniversaries", label: "Birthdays", icon: Cake },
+    { to: "/administration", label: "Administration", icon: UsersRound },
+    { to: "/calendar", label: "Calendar", icon: CalendarDays },
+    { to: "/activities", label: "Activities", icon: Repeat },
+    ...(isAdmin ? [{ to: "/finance/dashboard", label: "Finance", icon: Wallet }] : []),
+    { to: "/reports", label: "Reports", icon: FileBarChart },
+    { to: "/settings", label: "Settings", icon: Settings },
+  ] as const;
 
-const MOBILE_NAV = NAV.filter((n) =>
-  ["/dashboard", "/children", "/calendar", "/activities"].includes(n.to),
-);
-
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1">
       {NAV.map(({ to, label, icon: Icon }) => (
@@ -82,14 +83,30 @@ function Brand() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { profile, role, user } = useAuth();
+  const { profile, role, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const { data: events } = useEvents();
   const { data: exceptions } = useEventExceptions();
+  const { data: childrenData } = useChildren();
   const { data: notifications } = useNotifications(8);
   const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length;
+  const NAV = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/children", label: "Children", icon: Users },
+    { to: "/young", label: "Young", icon: UserRound },
+    { to: "/anniversaries", label: "Birthdays", icon: Cake },
+    { to: "/administration", label: "Administration", icon: UsersRound },
+    { to: "/calendar", label: "Calendar", icon: CalendarDays },
+    { to: "/activities", label: "Activities", icon: Repeat },
+    ...(isAdmin ? [{ to: "/finance/dashboard", label: "Finance", icon: Wallet }] : []),
+    { to: "/reports", label: "Reports", icon: FileBarChart },
+    { to: "/settings", label: "Settings", icon: Settings },
+  ] as const;
+  const MOBILE_NAV = NAV.filter((n) =>
+    ["/dashboard", "/children", "/calendar", "/activities", "/finance/dashboard"].includes(n.to),
+  );
   const title = useRouterState({
     select: (s) => {
       const path = s.location.pathname;
@@ -98,11 +115,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (!user?.id || !events) return;
-    void syncEventNotifications(user.id, events, exceptions ?? []).then(async () => {
-      await queryClient.invalidateQueries({ queryKey: notificationsKey });
-    });
-  }, [exceptions, events, queryClient, user?.id]);
+    if (!user?.id) return;
+    
+    // Sync event notifications
+    if (events) {
+      void syncEventNotifications(user.id, events, exceptions ?? []).then(async () => {
+        await queryClient.invalidateQueries({ queryKey: notificationsKey });
+      });
+    }
+    
+    // Sync birthday notifications
+    if (childrenData) {
+      void syncBirthdayNotifications(user.id, childrenData).then(async () => {
+        await queryClient.invalidateQueries({ queryKey: notificationsKey });
+      });
+    }
+  }, [exceptions, events, childrenData, queryClient, user?.id]);
 
   const markReadAndOpen = async (notificationId: string) => {
     await markNotificationAsRead(notificationId);
@@ -128,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col justify-between border-r border-sidebar-border bg-sidebar p-3 lg:flex">
         <div>
           <Brand />
-          <NavLinks />
+          <NavLinks isAdmin={isAdmin} />
         </div>
         <div className="border-t border-sidebar-border p-3">
           <p className="text-sm font-medium text-sidebar-foreground">
@@ -154,7 +182,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="w-72 border-sidebar-border bg-sidebar p-3">
                 <Brand />
-                <NavLinks onNavigate={() => setOpen(false)} />
+                <NavLinks onNavigate={() => setOpen(false)} isAdmin={isAdmin} />
                 <Button variant="secondary" size="sm" className="mt-4 w-full" onClick={signOut}>
                   <LogOut className="size-4" /> Log out
                 </Button>

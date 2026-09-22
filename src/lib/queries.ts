@@ -32,9 +32,38 @@ export type NotificationRow = {
   message: string;
   related_event_id: string | null;
   event_occurrence_date: string | null;
+  related_child_id: string | null;
+  birthday_year: number | null;
   scheduled_for: string | null;
   read_at: string | null;
   created_at: string;
+};
+
+export type FinanceCategoryRow = {
+  id: string;
+  name: string;
+  type: "income" | "expense";
+  description: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinanceTransactionRow = {
+  id: string;
+  date: string;
+  type: "income" | "expense";
+  amount: number;
+  currency?: "HTG" | "USD";
+  category_id: string;
+  description: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  is_voided: boolean;
+  void_reason: string | null;
+  category_name?: string | null;
 };
 
 export const childrenKey = ["children"] as const;
@@ -43,6 +72,8 @@ export const eventExceptionsKey = ["event_exceptions"] as const;
 export const adminKey = ["administration_members"] as const;
 export const auditKey = ["audit_logs"] as const;
 export const notificationsKey = ["notifications"] as const;
+export const financeCategoriesKey = ["finance_categories"] as const;
+export const financeTransactionsKey = ["financial_transactions"] as const;
 
 export function useChildren() {
   return useQuery({
@@ -139,6 +170,38 @@ export function useNotifications(limit = 10) {
         .limit(limit);
       if (error) throw error;
       return (data ?? []) as unknown as NotificationRow[];
+    },
+  });
+}
+
+export function useFinanceCategories() {
+  return useQuery({
+    queryKey: financeCategoriesKey,
+    queryFn: async (): Promise<FinanceCategoryRow[]> => {
+      const { data, error } = await supabase
+        .from("finance_categories")
+        .select("*")
+        .order("type", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as FinanceCategoryRow[];
+    },
+  });
+}
+
+export function useFinanceTransactions(limit?: number) {
+  return useQuery({
+    queryKey: [...financeTransactionsKey, limit ?? "all"],
+    queryFn: async (): Promise<FinanceTransactionRow[]> => {
+      let query = supabase.from("financial_transactions").select("*").order("date", { ascending: false });
+      if (limit) query = query.limit(limit);
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = (data ?? []) as FinanceTransactionRow[];
+      const categories = await supabase.from("finance_categories").select("id, name");
+      if (categories.error) throw categories.error;
+      const byId = new Map<string, string>((categories.data ?? []).map((row) => [row.id, row.name]));
+      return rows.map((row) => ({ ...row, category_name: byId.get(row.category_id) ?? null }));
     },
   });
 }
