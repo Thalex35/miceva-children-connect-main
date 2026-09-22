@@ -1,12 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AuditAction = "created" | "updated" | "deleted";
+export type AuditAction = "created" | "updated" | "deleted" | "voided" | "enabled" | "disabled";
 
 export async function logActivity(params: {
   userId: string | undefined;
   username: string | null | undefined;
-  action: AuditAction;
-  entityType: "child" | "guardian" | "administration_member" | "event";
+  action: AuditAction | string;
+  entityType: string;
   entityId?: string | null;
   description: string;
 }) {

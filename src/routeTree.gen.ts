@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedActivitiesRouteImport } from './routes/_authenticated/activities'
 import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
+import { Route as AuthenticatedAnniversariesRouteImport } from './routes/_authenticated/anniversaries'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -20,6 +21,10 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedChildrenIndexRouteImport } from './routes/_authenticated/children.index'
 import { Route as AuthenticatedChildrenChildIdRouteImport } from './routes/_authenticated/children.$childId'
 import { Route as AuthenticatedChildrenNewRouteImport } from './routes/_authenticated/children.new'
+import { Route as AuthenticatedFinanceCategoriesRouteImport } from './routes/_authenticated/finance.categories'
+import { Route as AuthenticatedFinanceDashboardRouteImport } from './routes/_authenticated/finance.dashboard'
+import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance.reports'
+import { Route as AuthenticatedFinanceTransactionsRouteImport } from './routes/_authenticated/finance.transactions'
 import { Route as AuthenticatedYoungIndexRouteImport } from './routes/_authenticated/young.index'
 import { Route as AuthenticatedChildrenChildIdEditRouteImport } from './routes/_authenticated/children.$childId.edit'
 
@@ -41,6 +46,12 @@ const AuthenticatedAdministrationRoute =
   AuthenticatedAdministrationRouteImport.update({
     id: '/administration',
     path: '/administration',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAnniversariesRoute =
+  AuthenticatedAnniversariesRouteImport.update({
+    id: '/anniversaries',
+    path: '/anniversaries',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
@@ -81,6 +92,30 @@ const AuthenticatedChildrenNewRoute =
     path: '/children/new',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinanceCategoriesRoute =
+  AuthenticatedFinanceCategoriesRouteImport.update({
+    id: '/finance/categories',
+    path: '/finance/categories',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceDashboardRoute =
+  AuthenticatedFinanceDashboardRouteImport.update({
+    id: '/finance/dashboard',
+    path: '/finance/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceReportsRoute =
+  AuthenticatedFinanceReportsRouteImport.update({
+    id: '/finance/reports',
+    path: '/finance/reports',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinanceTransactionsRoute =
+  AuthenticatedFinanceTransactionsRouteImport.update({
+    id: '/finance/transactions',
+    path: '/finance/transactions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedYoungIndexRoute = AuthenticatedYoungIndexRouteImport.update({
   id: '/young/',
   path: '/young/',
@@ -97,12 +132,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activities': typeof AuthenticatedActivitiesRoute
   '/administration': typeof AuthenticatedAdministrationRoute
+  '/anniversaries': typeof AuthenticatedAnniversariesRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/children/new': typeof AuthenticatedChildrenNewRoute
+  '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
+  '/finance/dashboard': typeof AuthenticatedFinanceDashboardRoute
+  '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
   '/children/': typeof AuthenticatedChildrenIndexRoute
   '/young/': typeof AuthenticatedYoungIndexRoute
   '/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
@@ -111,12 +151,17 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activities': typeof AuthenticatedActivitiesRoute
   '/administration': typeof AuthenticatedAdministrationRoute
+  '/anniversaries': typeof AuthenticatedAnniversariesRoute
   '/calendar': typeof AuthenticatedCalendarRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/children/new': typeof AuthenticatedChildrenNewRoute
+  '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
+  '/finance/dashboard': typeof AuthenticatedFinanceDashboardRoute
+  '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
   '/children': typeof AuthenticatedChildrenIndexRoute
   '/young': typeof AuthenticatedYoungIndexRoute
   '/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
@@ -127,12 +172,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/activities': typeof AuthenticatedActivitiesRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
+  '/_authenticated/anniversaries': typeof AuthenticatedAnniversariesRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/children/$childId': typeof AuthenticatedChildrenChildIdRouteWithChildren
   '/_authenticated/children/new': typeof AuthenticatedChildrenNewRoute
+  '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
+  '/_authenticated/finance/dashboard': typeof AuthenticatedFinanceDashboardRoute
+  '/_authenticated/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/_authenticated/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
   '/_authenticated/children/': typeof AuthenticatedChildrenIndexRoute
   '/_authenticated/young/': typeof AuthenticatedYoungIndexRoute
   '/_authenticated/children/$childId/edit': typeof AuthenticatedChildrenChildIdEditRoute
@@ -143,12 +193,17 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/administration'
+    | '/anniversaries'
     | '/calendar'
     | '/dashboard'
     | '/reports'
     | '/settings'
     | '/children/$childId'
     | '/children/new'
+    | '/finance/categories'
+    | '/finance/dashboard'
+    | '/finance/reports'
+    | '/finance/transactions'
     | '/children/'
     | '/young/'
     | '/children/$childId/edit'
@@ -157,12 +212,17 @@ export interface FileRouteTypes {
     | '/'
     | '/activities'
     | '/administration'
+    | '/anniversaries'
     | '/calendar'
     | '/dashboard'
     | '/reports'
     | '/settings'
     | '/children/$childId'
     | '/children/new'
+    | '/finance/categories'
+    | '/finance/dashboard'
+    | '/finance/reports'
+    | '/finance/transactions'
     | '/children'
     | '/young'
     | '/children/$childId/edit'
@@ -172,12 +232,17 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_authenticated/activities'
     | '/_authenticated/administration'
+    | '/_authenticated/anniversaries'
     | '/_authenticated/calendar'
     | '/_authenticated/dashboard'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/children/$childId'
     | '/_authenticated/children/new'
+    | '/_authenticated/finance/categories'
+    | '/_authenticated/finance/dashboard'
+    | '/_authenticated/finance/reports'
+    | '/_authenticated/finance/transactions'
     | '/_authenticated/children/'
     | '/_authenticated/young/'
     | '/_authenticated/children/$childId/edit'
@@ -216,6 +281,13 @@ declare module '@tanstack/react-router' {
       path: '/administration'
       fullPath: '/administration'
       preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/anniversaries': {
+      id: '/_authenticated/anniversaries'
+      path: '/anniversaries'
+      fullPath: '/anniversaries'
+      preLoaderRoute: typeof AuthenticatedAnniversariesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calendar': {
@@ -267,6 +339,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChildrenNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finance/categories': {
+      id: '/_authenticated/finance/categories'
+      path: '/finance/categories'
+      fullPath: '/finance/categories'
+      preLoaderRoute: typeof AuthenticatedFinanceCategoriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/dashboard': {
+      id: '/_authenticated/finance/dashboard'
+      path: '/finance/dashboard'
+      fullPath: '/finance/dashboard'
+      preLoaderRoute: typeof AuthenticatedFinanceDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/reports': {
+      id: '/_authenticated/finance/reports'
+      path: '/finance/reports'
+      fullPath: '/finance/reports'
+      preLoaderRoute: typeof AuthenticatedFinanceReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finance/transactions': {
+      id: '/_authenticated/finance/transactions'
+      path: '/finance/transactions'
+      fullPath: '/finance/transactions'
+      preLoaderRoute: typeof AuthenticatedFinanceTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/young/': {
       id: '/_authenticated/young/'
       path: '/young'
@@ -302,12 +402,17 @@ const AuthenticatedChildrenChildIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivitiesRoute: typeof AuthenticatedActivitiesRoute
   AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
+  AuthenticatedAnniversariesRoute: typeof AuthenticatedAnniversariesRoute
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedChildrenChildIdRoute: typeof AuthenticatedChildrenChildIdRouteWithChildren
   AuthenticatedChildrenNewRoute: typeof AuthenticatedChildrenNewRoute
+  AuthenticatedFinanceCategoriesRoute: typeof AuthenticatedFinanceCategoriesRoute
+  AuthenticatedFinanceDashboardRoute: typeof AuthenticatedFinanceDashboardRoute
+  AuthenticatedFinanceReportsRoute: typeof AuthenticatedFinanceReportsRoute
+  AuthenticatedFinanceTransactionsRoute: typeof AuthenticatedFinanceTransactionsRoute
   AuthenticatedChildrenIndexRoute: typeof AuthenticatedChildrenIndexRoute
   AuthenticatedYoungIndexRoute: typeof AuthenticatedYoungIndexRoute
 }
@@ -315,6 +420,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivitiesRoute: AuthenticatedActivitiesRoute,
   AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
+  AuthenticatedAnniversariesRoute: AuthenticatedAnniversariesRoute,
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
@@ -322,6 +428,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChildrenChildIdRoute:
     AuthenticatedChildrenChildIdRouteWithChildren,
   AuthenticatedChildrenNewRoute: AuthenticatedChildrenNewRoute,
+  AuthenticatedFinanceCategoriesRoute: AuthenticatedFinanceCategoriesRoute,
+  AuthenticatedFinanceDashboardRoute: AuthenticatedFinanceDashboardRoute,
+  AuthenticatedFinanceReportsRoute: AuthenticatedFinanceReportsRoute,
+  AuthenticatedFinanceTransactionsRoute: AuthenticatedFinanceTransactionsRoute,
   AuthenticatedChildrenIndexRoute: AuthenticatedChildrenIndexRoute,
   AuthenticatedYoungIndexRoute: AuthenticatedYoungIndexRoute,
 }

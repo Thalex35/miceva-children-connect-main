@@ -190,6 +190,89 @@ export type Database = {
           },
         ]
       }
+      finance_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          is_voided: boolean
+          type: string
+          updated_at: string
+          void_reason: string | null
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          date: string
+          description: string
+          id?: string
+          is_voided?: boolean
+          type: string
+          updated_at?: string
+          void_reason?: string | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          is_voided?: boolean
+          type?: string
+          updated_at?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           active: boolean
